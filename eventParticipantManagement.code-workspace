@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"path": "eventParticipantManagement"
+		},
+		{
+			"path": "backend"
+		},
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"kiroAgent.configureMCP": "Disabled"
+	}
+}
