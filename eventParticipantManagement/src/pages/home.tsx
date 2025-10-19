@@ -3,7 +3,7 @@ import { QrCode, Users, Calendar, User, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import type { RootState, AppDispatch } from "../store";
-import { logout } from "../store/slices/authSlice";
+import { logout } from "../hooks/authActions";
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
@@ -20,7 +20,7 @@ const HomePage: React.FC = () => {
     if (!isAuthenticated) {
       navigate('/login');
     }
-  }, [isAuthenticated])
+  }, [isAuthenticated, navigate])
 
 
   return (
@@ -38,6 +38,14 @@ const HomePage: React.FC = () => {
             >
               Events
             </button>
+            {user?.role === 'admin' && (
+              <button
+                onClick={() => navigate("/users")}
+                className="text-gray-600 hover:text-indigo-600 font-medium"
+              >
+                Users
+              </button>
+            )}
             <div className="flex items-center space-x-2">
               <button className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 flex items-center space-x-2">
                 <User className="h-4 w-4" />

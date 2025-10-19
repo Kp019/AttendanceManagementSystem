@@ -1,6 +1,5 @@
 import { useAppSelector, useAppDispatch } from "../hooks/redux"; // Ensure correct path for redux hooks
-import { login, register } from "../hooks/authActions"; // Import async thunks from authActions
-import { logout } from "../store/slices/authSlice"; // Import sync action from authSlice
+import { login, register, logout } from "../hooks/authActions"; // Import async thunks from authActions
 // import {
 //   LoginCredentials,
 //   RegisterUserData,
@@ -55,8 +54,12 @@ export const useAuth = () => {
     }
   };
 
-  const handleLogout = (): void => {
-    dispatch(logout());
+  const handleLogout = async (): Promise<void> => {
+    try {
+      await dispatch(logout()).unwrap();
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
   };
 
   return {

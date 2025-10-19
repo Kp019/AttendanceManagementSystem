@@ -3,6 +3,7 @@ import authSlice from './slices/authSlice'
 import eventsSlice from './slices/eventsSlice'
 import participantsSlice from './slices/participantsSlice'
 import attendanceSlice from './slices/attendanceSlice'
+import usersSlice from './slices/usersSlice'
 
 export const store = configureStore({
   reducer: {
@@ -10,6 +11,7 @@ export const store = configureStore({
     events: eventsSlice,
     participants: participantsSlice,
     attendance: attendanceSlice,
+    users: usersSlice,
   },
 })
 

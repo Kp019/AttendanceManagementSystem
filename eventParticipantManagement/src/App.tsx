@@ -12,6 +12,7 @@ import HomePage from "./pages/home";
 import EventsPage from "./pages/eventPage";
 import EventDetailPage from "./pages/eventDetailPage";
 import { AttendateManagement } from "./pages/attendateManagement";
+import UsersManagementPage from "./pages/UsersManagementPage";
 import ProtectedRoute from './components/ProtectedRoute';
 
 function AuthGate({ children }: { children: React.ReactNode }) {
@@ -41,6 +42,7 @@ function App() {
             <Route path="/events" element={<ProtectedRoute><EventsPage /></ProtectedRoute>} />
             <Route path="/events/:id" element={<ProtectedRoute><EventDetailPage /></ProtectedRoute>} />
             <Route path="/events/:id/attendance" element={<ProtectedRoute><AttendateManagement /></ProtectedRoute>} />
+            <Route path="/users" element={<ProtectedRoute><UsersManagementPage /></ProtectedRoute>} />
 
             {/* Redirect unknown routes to home */}
             <Route path="*" element={<Navigate to="/" replace />} />

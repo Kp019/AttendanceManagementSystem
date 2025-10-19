@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { store } from '../store';
-import { logout } from '../store/slices/authSlice';
+import { logout } from '../hooks/authActions';
+import { supabase } from '../lib/supabase';
 
 // Centralized Axios instance with auth and 401 handling
 export const api = axios.create({
@@ -8,11 +9,16 @@ export const api = axios.create({
 });
 
 // Attach token on each request if present
-api.interceptors.request.use((config) => {
-  const token = typeof localStorage !== 'undefined' ? localStorage.getItem('token') : null;
-  if (token) {
-    config.headers = config.headers ?? {};
-    config.headers['Authorization'] = `Bearer ${token}`;
+api.interceptors.request.use(async (config) => {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    console.log(session, "session");
+    if (session?.access_token) {
+      config.headers = config.headers ?? {};
+      config.headers['Authorization'] = `Bearer ${session.access_token}`;
+    }
+  } catch (error) {
+    console.error('Error getting session for API request:', error);
   }
   return config;
 });

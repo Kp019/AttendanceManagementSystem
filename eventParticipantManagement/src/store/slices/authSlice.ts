@@ -1,10 +1,18 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
-import { login, register, loadUser } from '../../hooks/authActions';
+import { login, register, loadUser, logout } from '../../hooks/authActions';
+
+interface User {
+  id: string;
+  email: string | undefined;
+  name: string;
+  role: 'participant' | 'admin';
+}
 
 interface AuthState {
   loading: boolean;
-  user: any | null; // Replace `any` with the actual user type
+  user: User | null;
+  session: any | null;
   isAuthenticated: boolean;
   error: string | null;
   authInitialized: boolean;
@@ -13,6 +21,7 @@ interface AuthState {
 const initialState: AuthState = {
   loading: false,
   user: null,
+  session: null,
   isAuthenticated: false,
   error: null,
   authInitialized: false,
@@ -22,12 +31,10 @@ const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
-    logout(state) {
+    logoutLocal(state) {
       state.user = null;
+      state.session = null;
       state.isAuthenticated = false;
-      if (typeof localStorage !== 'undefined') {
-        localStorage.removeItem('token');
-      }
     },
     clearError(state) {
       state.error = null;
@@ -38,48 +45,59 @@ const authSlice = createSlice({
       .addCase(loadUser.pending, (state) => {
         state.loading = true;
       })
-      .addCase(loadUser.fulfilled, (state, action: PayloadAction<{ user: any }>) => {
+      .addCase(loadUser.fulfilled, (state, action: PayloadAction<{ user: User; session: any }>) => {
         state.loading = false;
-        state.user = action.payload.user ?? action.payload ?? null;
-        state.isAuthenticated = !!state.user;
+        state.user = action.payload.user;
+        state.session = action.payload.session;
+        state.isAuthenticated = true;
         state.authInitialized = true;
       })
       .addCase(loadUser.rejected, (state) => {
         state.loading = false;
         state.user = null;
+        state.session = null;
         state.isAuthenticated = false;
         state.authInitialized = true;
       })
-      .addCase(login.fulfilled, (state, action: PayloadAction<{ user: any; token?: string }>) => {
+      .addCase(login.fulfilled, (state, action: PayloadAction<{ user: User; session: any }>) => {
         state.loading = false;
-        state.user = action.payload.user ?? null;
+        state.user = action.payload.user;
+        state.session = action.payload.session;
         state.isAuthenticated = true;
-        if (typeof localStorage !== 'undefined' && action.payload.token !== undefined) {
-          localStorage.setItem('token', action.payload.token);
-        }
+        state.error = null;
       })
       .addCase(login.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error?.message ?? 'An error occurred';
+        state.error = action.payload as string;
       })
       .addCase(register.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(register.fulfilled, (state, action: PayloadAction<{ user: any; token?: string }>) => {
+      .addCase(register.fulfilled, (state) => {
         state.loading = false;
-        state.user = action.payload.user ?? null;
-        state.isAuthenticated = true;
-        if (typeof localStorage !== 'undefined' && action.payload.token != null) {
-          localStorage.setItem('token', action.payload.token);
-        }
+        state.error = null;
+        // Note: For Supabase auth, user won't be authenticated until email is verified
+        // state.user = action.payload.user;
+        // state.isAuthenticated = true;
       })
       .addCase(register.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error?.message ?? 'An error occurred';
+        state.error = action.payload as string;
+      })
+      .addCase(logout.fulfilled, (state) => {
+        state.loading = false;
+        state.user = null;
+        state.session = null;
+        state.isAuthenticated = false;
+        state.error = null;
+      })
+      .addCase(logout.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
       });
   },
 });
 
-export const { logout, clearError } = authSlice.actions;
+export const { logoutLocal, clearError } = authSlice.actions;
 export default authSlice.reducer;

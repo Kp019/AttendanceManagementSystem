@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import type { RootState, AppDispatch } from "../store";
 import { fetchEvents, createEvent } from "../store/slices/eventsSlice";
-import { logout } from "../store/slices/authSlice";
+import { logout } from "../hooks/authActions";
 import CreateEventForm from "../components/CreateEventForm";
 import api from "../hooks/http";
 
@@ -21,20 +21,18 @@ const EventsPage: React.FC = () => {
   } = useSelector((state: RootState) => state.events);
   const [showCreateModal, setShowCreateModal] = useState(false);
 
-  console.log(events, "qwerty");
-
+  
   useEffect(() => {
+    console.log(events, user, "qwerty");
     if (!isAuthenticated) {
       navigate("/login");
       return;
     }
-    api
-      .get("/events")
-      .then((response) => {
-        console.log(response.data, "response");
-      });
+    api.get("/events").then((response) => {
+      console.log(response.data, "response");
+    });
     dispatch(fetchEvents());
-  }, [isAuthenticated, dispatch, navigate]);
+  }, []);
 
   const handleLogout = () => {
     dispatch(logout());
@@ -57,7 +55,7 @@ const EventsPage: React.FC = () => {
             >
               Home
             </button>
-            {user.role === "admin" && (
+            {user?.role === "admin" && (
               <button
                 onClick={() => setShowCreateModal(true)}
                 className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 flex items-center space-x-2"

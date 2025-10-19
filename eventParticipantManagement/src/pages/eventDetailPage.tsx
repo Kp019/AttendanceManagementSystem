@@ -22,7 +22,7 @@ import {
   fetchAttendanceColumns,
   createAttendanceColumn,
 } from "../store/slices/attendanceSlice";
-import { logout } from "../store/slices/authSlice";
+import { logout } from "../hooks/authActions";
 import ParticipantTable from "../components/ParticipantTable";
 
 const EventDetailPage: React.FC = () => {
@@ -57,10 +57,9 @@ const EventDetailPage: React.FC = () => {
       navigate("/login");
       return;
     }
-    const token = localStorage.getItem("token") || "";
 
     if (id) {
-      dispatch(fetchEventById({ eventId: id, token }));
+      dispatch(fetchEventById(id));
       dispatch(fetchParticipants(id));
       dispatch(fetchAttendanceColumns(id));
     }

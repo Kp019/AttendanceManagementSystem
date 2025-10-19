@@ -110,7 +110,7 @@ const generateQRCode = async (data, filename) => {
 // Register user (creates profile after Supabase auth signup)
 app.post('/auth/register', async (req, res) => {
   try {
-    const { email, password, name, role } = req.body;
+    const { email, password, name, role = 'participant' } = req.body;
 
     // Validate input
     if (!email || !password || !name) {
@@ -129,26 +129,15 @@ app.post('/auth/register', async (req, res) => {
       }
     });
 
-    // add data to user table
-    const { data: userData, error: userError } = await supabaseAdmin
-      .from('users')
-      .insert({
-        id: data.user.id,
-        name,
-        email,
-        role,
-      });
-
-    if (error || userError) {
+    if (error) {
       return res.status(400).json({ error: error.message });
     }
 
-    // The user profile will be created automatically by the trigger and user table
+    // The user profile will be created automatically by the trigger
     // Return success response
     res.status(201).json({
       message: 'User registered successfully. Please check your email for verification.',
-      user: data.user,
-      userData: userData
+      user: data.user
     });
   } catch (error) {
     console.error('Registration error:', error);
@@ -503,7 +492,7 @@ app.post('/events/:id/participants/upload', authenticateToken, upload.single('cs
             return res.status(400).json({ error: 'No valid participants found in CSV' });
           }
 
-          console.log(participants, 'particiapant');
+          console.log(participants, 'participant');
 
           // Insert participants into database
           const { data, error } = await supabaseAdmin
@@ -1111,124 +1100,6 @@ process.on('SIGTERM', () => {
 process.on('SIGINT', () => {
   console.log('SIGINT received, shutting down gracefully');
   process.exit(0);
-});
-
-// User Management Endpoints
-
-// Get all users (admin only)
-app.get('/users', authenticateToken, async (req, res) => {
-  try {
-    // Check if user is admin
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({ error: 'Admin access required' });
-    }
-
-    const { data: users, error } = await supabaseAdmin
-      .from('users')
-      .select(`
-        id,
-        name,
-        role,
-        created_at,
-        updated_at
-      `)
-      .order('created_at', { ascending: false });
-
-    // Get email addresses separately since we can't join auth.users directly
-    const userIds = users?.map(user => user.id) || [];
-    const { data: authUsers } = await supabaseAdmin.auth.admin.listUsers();
-    const emailMap = new Map();
-    authUsers?.users?.forEach(authUser => {
-      emailMap.set(authUser.id, authUser.email);
-    });
-
-    if (error) {
-      console.error('Error fetching users:', error);
-      return res.status(500).json({ error: 'Failed to fetch users' });
-    }
-
-    // Transform the data to include email
-    const usersWithEmail = users.map(user => ({
-      id: user.id,
-      name: user.name,
-      email: emailMap.get(user.id) || '',
-      role: user.role,
-      created_at: user.created_at,
-      updated_at: user.updated_at
-    }));
-
-    res.json(usersWithEmail);
-  } catch (error) {
-    console.error('Error in /users endpoint:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// Update user role (admin only)
-app.put('/users/:id/role', authenticateToken, async (req, res) => {
-  try {
-    // Check if user is admin
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({ error: 'Admin access required' });
-    }
-
-    const { id } = req.params;
-    const { role } = req.body;
-
-    if (!role || !['participant', 'admin'].includes(role)) {
-      return res.status(400).json({ error: 'Invalid role. Must be "participant" or "admin"' });
-    }
-
-    const { data, error } = await supabaseAdmin
-      .from('users')
-      .update({ role, updated_at: new Date().toISOString() })
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error updating user role:', error);
-      return res.status(500).json({ error: 'Failed to update user role' });
-    }
-
-    res.json({ message: 'User role updated successfully', user: data });
-  } catch (error) {
-    console.error('Error in /users/:id/role endpoint:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// Delete user (admin only)
-app.delete('/users/:id', authenticateToken, async (req, res) => {
-  try {
-    // Check if user is admin
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({ error: 'Admin access required' });
-    }
-
-    const { id } = req.params;
-
-    // Prevent admin from deleting themselves
-    if (id === req.user.id) {
-      return res.status(400).json({ error: 'Cannot delete your own account' });
-    }
-
-    // Delete from users (this will cascade to auth.users due to the foreign key)
-    const { error } = await supabaseAdmin
-      .from('users')
-      .delete()
-      .eq('id', id);
-
-    if (error) {
-      console.error('Error deleting user:', error);
-      return res.status(500).json({ error: 'Failed to delete user' });
-    }
-
-    res.json({ message: 'User deleted successfully' });
-  } catch (error) {
-    console.error('Error in /users/:id endpoint:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
 });
 
 // Start server

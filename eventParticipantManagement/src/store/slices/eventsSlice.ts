@@ -31,15 +31,11 @@ export const createEvent = createAsyncThunk(
 
 export const fetchEventById = createAsyncThunk(
   'events/fetchEventById',
-  async (
-    { eventId, token }: { eventId: string; token: string }
-  ) => {
-    api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    console.log(token, "token");
+  async (eventId: string) => {
     const { data } = await api.get(`/events/${eventId}`);
     return data;
   }
-);
+); // Updated for Supabase auth
 
 export const addEventAdmin = createAsyncThunk(
   'events/addAdmin',
